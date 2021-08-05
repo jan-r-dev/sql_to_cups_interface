@@ -1,7 +1,23 @@
 package main
 
+import (
+	"fmt"
+	"os"
+)
+
 func main() {
-	runSQL()
+	// Input of the query as last argument
+	filename := os.Args[int(len(os.Args))-1]
+	// Retrieve query
+	query := getQuery(filename)
+
+	// Retrieve and process devices
+	devices := runSQLMain(query)
+
+	// Generate commands
+	commands := createCommands(devices)
+
+	fmt.Println(commands)
 }
 
-// go run .\main.go .\sql.go .\helpers.go
+// go run .\main.go .\sql.go .\helpers.go .\cmds testquery.sql

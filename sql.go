@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"io/ioutil"
 	"log"
 
 	"github.com/jackc/pgx/v4"
@@ -14,13 +14,13 @@ type deviceStruct struct {
 	brand      string
 	model      string
 	ppdNeeded  bool
+	ppdType    string
 	ppdAddress string
 	options    []string
 }
 
-func runSQL() {
+func runSQLMain(query string) []deviceStruct {
 	urlDB := getUrlDB()
-	query := getQuery()
 
 	// Connect to the database
 	conn := connDB(urlDB)
@@ -31,7 +31,9 @@ func runSQL() {
 	defer rows.Close()
 
 	// Iterate over returned rows
-	structifyQuery(rows)
+	devices := structifyQueryResult(rows)
+
+	return devices
 }
 
 func connDB(urlDB string) *pgx.Conn {
@@ -52,23 +54,34 @@ func queryDB(qs string, conn *pgx.Conn) pgx.Rows {
 	return rows
 }
 
-func structifyQuery(rows pgx.Rows) {
-	//PLACEHOLDER TODO
+func structifyQueryResult(rows pgx.Rows) []deviceStruct {
+	devices := []deviceStruct{}
 
 	for rows.Next() {
-		var name, ip, brand, model, ppdAddress string
+		var name, ip, brand, model, ppdAddress, ppdType string
 		var ppdNeeded bool
 		var options []string
 
-		err := rows.Scan(&name, &ip, &brand, &model, &ppdNeeded, &ppdAddress, &options)
+		err := rows.Scan(&name, &ip, &brand, &model, &ppdNeeded, &ppdType, &ppdAddress, &options)
 		if err != nil {
 			log.Fatal("Error reading rows:", err)
 		}
 
-		fmt.Println(name, ip, brand, model, ppdAddress, ppdNeeded, options)
+		ds := deviceStruct{
+			name:       name,
+			ip:         ip,
+			brand:      brand,
+			model:      model,
+			ppdNeeded:  ppdNeeded,
+			ppdType:    ppdType,
+			ppdAddress: ppdAddress,
+			options:    options,
+		}
+
+		devices = append(devices, ds)
 	}
 
-	// continue from here - declare struct and return it
+	return devices
 }
 
 // Provides valid url for connecting to the database based on env variables
@@ -80,7 +93,14 @@ func getUrlDB() string {
 	return url
 }
 
-func getQuery() string {
-	return "select name, ip, brand, model, ppd_needed, ppd_address, options from printers_temp"
-	//PLACEHOLDER TODO
+// Retrieves a query from the given file in the queries folder
+func getQuery(filename string) string {
+	bOut, err := ioutil.ReadFile("./queries/" + filename)
+	if err != nil {
+		log.Fatal("Error opening file:", err)
+	}
+
+	output := string(bOut)
+
+	return output
 }
