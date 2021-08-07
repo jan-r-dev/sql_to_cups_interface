@@ -1,5 +1,5 @@
 /database/
 /notes/
 
-
 /.env
+/output/*

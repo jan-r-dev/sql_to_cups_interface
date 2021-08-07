@@ -18,6 +18,8 @@ func main() {
 	commands := createCommands(devices)
 
 	fmt.Println(commands)
+
+	fileWriteTest(commands)
 }
 
-// go run .\main.go .\sql.go .\helpers.go .\cmds testquery.sql
+// go run .\main.go .\sql.go .\helpers.go .\cmds.go .\files.go testquery.sql
