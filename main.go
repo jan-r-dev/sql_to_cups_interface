@@ -2,24 +2,37 @@ package main
 
 import (
 	"fmt"
-	"os"
 )
 
 func main() {
-	// Input of the query as last argument
-	filename := os.Args[int(len(os.Args))-1]
-	// Retrieve query
-	query := getQuery(filename)
+	fmt.Println("Choose input or output: ")
+	var io string
+	fmt.Scanln(&io)
 
-	// Retrieve and process devices
-	devices := runSQLMain(query)
+	if io == "input" {
+		filename := "input.csv"
+		file := openFile(filename)
+		defer file.Close()
 
-	// Generate commands
-	commands := createCommands(devices)
+		devices := createDevicesFromFile(file)
+		inserts := getInserts(devices)
 
-	fmt.Println(commands)
+		fmt.Println(inserts)
+	} else if io == "output" {
+		filename := "testquery.sql"
 
-	fileWriteTest(commands)
+		query := getSelect(filename)
+
+		devices := runSQLSelect(query)
+
+		commands := createCommands(devices)
+
+		fmt.Println(commands)
+
+		fileWriteTest(commands)
+	} else {
+		fmt.Println("Invalid choice. Exiting..")
+	}
 }
 
 // go run .\main.go .\sql.go .\helpers.go .\cmds.go .\files.go testquery.sql

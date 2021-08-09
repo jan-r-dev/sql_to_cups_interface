@@ -4,6 +4,8 @@ import (
 	"context"
 	"io/ioutil"
 	"log"
+	"strconv"
+	"strings"
 
 	"github.com/jackc/pgx/v4"
 )
@@ -19,11 +21,9 @@ type deviceStruct struct {
 	options    []string
 }
 
-func runSQLMain(query string) []deviceStruct {
-	urlDB := getUrlDB()
-
+func runSQLSelect(query string) []deviceStruct {
 	// Connect to the database
-	conn := connDB(urlDB)
+	conn := connDB()
 	defer conn.Close(context.Background())
 
 	// Query database
@@ -36,7 +36,18 @@ func runSQLMain(query string) []deviceStruct {
 	return devices
 }
 
-func connDB(urlDB string) *pgx.Conn {
+func runSQLInsert(devices []deviceStruct) {
+	// Connect to the database
+	conn := connDB()
+	defer conn.Close(context.Background())
+
+	// CONTINUE FROM HERE
+
+}
+
+func connDB() *pgx.Conn {
+	urlDB := getUrlDB()
+
 	conn, err := pgx.Connect(context.Background(), urlDB)
 	if err != nil {
 		log.Fatal("Error connecting to DB:", err)
@@ -94,7 +105,7 @@ func getUrlDB() string {
 }
 
 // Retrieves a query from the given file in the queries folder
-func getQuery(filename string) string {
+func getSelect(filename string) string {
 	bOut, err := ioutil.ReadFile("./queries/" + filename)
 	if err != nil {
 		log.Fatal("Error opening file:", err)
@@ -103,4 +114,26 @@ func getQuery(filename string) string {
 	output := string(bOut)
 
 	return output
+}
+
+func getInserts(devices []deviceStruct) string {
+	insertsSlice := []string{}
+	fields := []string{"name", "ip", "brand", "model", "ppd_needed", "ppd_type", "ppd_address", "options"}
+
+	for _, device := range devices {
+		insert := "insert into printers_temp (" + strings.Join(fields, ",") + ") values(" + device.name
+		insert = insert + "," + device.ip
+		insert = insert + "," + device.brand
+		insert = insert + "," + device.model
+		insert = insert + "," + strconv.FormatBool(device.ppdNeeded)
+		insert = insert + "," + device.ppdType
+		insert = insert + "," + device.ppdAddress
+		insert = insert + "," + strings.Join(device.options, " ") + ")"
+
+		insertsSlice = append(insertsSlice, insert)
+	}
+
+	inserts := strings.Join(insertsSlice, "\n")
+
+	return inserts
 }
