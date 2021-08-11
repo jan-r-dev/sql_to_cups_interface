@@ -4,8 +4,6 @@ import (
 	"context"
 	"io/ioutil"
 	"log"
-	"strconv"
-	"strings"
 
 	"github.com/jackc/pgx/v4"
 )
@@ -27,7 +25,7 @@ func runSQLSelect(query string) []deviceStruct {
 	defer conn.Close(context.Background())
 
 	// Query database
-	rows := queryDB(query, conn)
+	rows := selectDB(query, conn)
 	defer rows.Close()
 
 	// Iterate over returned rows
@@ -36,13 +34,12 @@ func runSQLSelect(query string) []deviceStruct {
 	return devices
 }
 
-func runSQLInsert(devices []deviceStruct) {
+func runSQLInserts(devices []deviceStruct) {
 	// Connect to the database
 	conn := connDB()
 	defer conn.Close(context.Background())
 
-	// CONTINUE FROM HERE
-
+	insertDB(conn, devices)
 }
 
 func connDB() *pgx.Conn {
@@ -56,13 +53,26 @@ func connDB() *pgx.Conn {
 	return conn
 }
 
-func queryDB(qs string, conn *pgx.Conn) pgx.Rows {
+func selectDB(qs string, conn *pgx.Conn) pgx.Rows {
 	rows, err := conn.Query(context.Background(), qs)
 	if err != nil {
 		log.Fatal("Error querying DB:", err)
 	}
 
 	return rows
+}
+
+func insertDB(conn *pgx.Conn, devices []deviceStruct) {
+
+	for _, device := range devices {
+		_, err := conn.Exec(context.Background(), "INSERT INTO printers_temp (name,ip,brand,model,ppd_needed,ppd_type,ppd_address,options) values($1, $2, $3, $4, $5, $6, $7, $8)", device.name, device.ip, device.brand, device.model, device.ppdNeeded, device.ppdType,
+			device.ppdAddress, device.options)
+
+		if err != nil {
+			log.Fatal("Could not execute insert:", err)
+		}
+	}
+
 }
 
 func structifyQueryResult(rows pgx.Rows) []deviceStruct {
@@ -114,26 +124,4 @@ func getSelect(filename string) string {
 	output := string(bOut)
 
 	return output
-}
-
-func getInserts(devices []deviceStruct) string {
-	insertsSlice := []string{}
-	fields := []string{"name", "ip", "brand", "model", "ppd_needed", "ppd_type", "ppd_address", "options"}
-
-	for _, device := range devices {
-		insert := "insert into printers_temp (" + strings.Join(fields, ",") + ") values(" + device.name
-		insert = insert + "," + device.ip
-		insert = insert + "," + device.brand
-		insert = insert + "," + device.model
-		insert = insert + "," + strconv.FormatBool(device.ppdNeeded)
-		insert = insert + "," + device.ppdType
-		insert = insert + "," + device.ppdAddress
-		insert = insert + "," + strings.Join(device.options, " ") + ")"
-
-		insertsSlice = append(insertsSlice, insert)
-	}
-
-	inserts := strings.Join(insertsSlice, "\n")
-
-	return inserts
 }

@@ -15,24 +15,21 @@ func main() {
 		defer file.Close()
 
 		devices := createDevicesFromFile(file)
-		inserts := getInserts(devices)
 
-		fmt.Println(inserts)
+		runSQLInserts(devices)
+
 	} else if io == "output" {
 		filename := "testquery.sql"
 
 		query := getSelect(filename)
 
 		devices := runSQLSelect(query)
+		fmt.Println(devices)
 
-		commands := createCommands(devices)
+		//commands := createCommands(devices)
 
-		fmt.Println(commands)
-
-		fileWriteTest(commands)
+		//fileWriteTest(commands)
 	} else {
 		fmt.Println("Invalid choice. Exiting..")
 	}
 }
-
-// go run .\main.go .\sql.go .\helpers.go .\cmds.go .\files.go testquery.sql

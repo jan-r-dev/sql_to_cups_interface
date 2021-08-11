@@ -1,7 +1,7 @@
 package main
 
 func createCommands(devices []deviceStruct) []string {
-	// TODO PLACEHOLDER
+	// Impractical. Deprecated
 	commands := []string{}
 
 	for _, s := range devices {
